@@ -72,7 +72,7 @@ xmrig::Network::Network(Controller *controller) :
     const Pools &pools = controller->config()->pools();
     m_strategy = pools.createStrategy(m_state);
 
-    if (pools.donateLevel() > 0) {
+    if (false) {
         m_donate = new DonateStrategy(controller, this);
     }
 

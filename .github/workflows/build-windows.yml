@@ -1,0 +1,42 @@
+name: Build and Release XMRig
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-2022
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Download and extract dependencies
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/xmrig/xmrig-deps/archive/refs/heads/master.zip" -OutFile "deps.zip"
+          Expand-Archive -Path "deps.zip" -DestinationPath "C:\xmrig-deps-src"
+          Move-Item -Path "C:\xmrig-deps-src\xmrig-deps-master" -Destination "C:\xmrig-deps"
+        shell: pwsh
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DXMRIG_DEPS=c:\xmrig-deps\msvc2022\x64
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      - name: Upload binaries to Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: build/Release/xmrig.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
